@@ -1,0 +1,3 @@
+subscriber_topic: /velodyne_points
+publisher_topic: /velodyne_points_filtered
+frame_id: velodyne
