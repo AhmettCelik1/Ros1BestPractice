@@ -35,6 +35,11 @@ namespace best_practice_cpp_pkg
         BestPractice(const BestPractice &source);
 
         /*!
+         *  Overload Copy Constructor and it is assigned to the current object.
+         */
+        BestPractice &operator=(const BestPractice &rhs);
+
+        /*!
          * Destructor.
          */
         virtual ~BestPractice();

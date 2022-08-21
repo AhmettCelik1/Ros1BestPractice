@@ -9,7 +9,7 @@ namespace best_practice_cpp_pkg
     //! Constructor Initialization List
     BestPractice::BestPractice(ros::NodeHandle &t_node_handle)
         : m_is_cloud_received{false}, m_is_image_received{false},
-          m_rate{20}, m_rate_waiting{1},
+          m_rate{100}, m_rate_waiting{1},
           m_node_handle{nullptr}, m_point_cloud{nullptr}, m_image{nullptr}
     {
 
@@ -82,6 +82,20 @@ namespace best_practice_cpp_pkg
         ROS_INFO("[%s] Copy Constructor is activated (DEEP COPING) .", __APP_NAME__);
     }
 
+    //! Copy assignment operator Deep Coping
+    BestPractice &BestPractice::operator=(const BestPractice &rhs)
+    {
+        ROS_INFO("[%s] Copy Assignment Operator is activated (DEEP COPING) .", __APP_NAME__);
+        if (this == &rhs)
+        {
+            return *this;
+            delete this->m_node_handle;
+            m_node_handle = new ros::NodeHandle(*rhs.m_node_handle);
+            return *this;
+        }
+    }
+
+    //! Destructor Initialization .
     BestPractice::~BestPractice()
     {
         // Dealocate Memory
