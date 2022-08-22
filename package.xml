@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>RosBestPractice</name>
+  <name>ros1_best_practice</name>
   <version>0.0.0</version>
-  <description>The RosBestPractice package</description>
+  <description>The ros1_best_practice package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->

@@ -1,7 +1,7 @@
 <launch>
 
-    <node pkg="RosBestPractice" type="best_practice" name="best_practice_node" output="screen">
-        <rosparam command="load" file="$(find RosBestPractice)/config/best_practice.yaml" />
+    <node pkg="ros1_best_practice" type="best_practice" name="best_practice_node" output="screen">
+        <rosparam command="load" file="$(find ros1_best_practice)/config/best_practice.yaml" />
     </node>
 
 </launch>
