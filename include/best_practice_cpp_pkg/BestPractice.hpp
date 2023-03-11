@@ -5,6 +5,16 @@
 #include <vector>
 #include <unordered_map>
 
+#include <atomic>
+#include <mutex>
+#include <thread>
+
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <pcl/filters/voxel_grid.h>
+
+
 #include "ros/ros.h"
 #include "sensor_msgs/PointCloud2.h"
 #include "sensor_msgs/point_cloud2_iterator.h"
@@ -87,6 +97,8 @@ namespace best_practice_cpp_pkg
          */
         inline void contiuousCallback();
 
+        inline void threadLoop();
+
         //! ROS node handle.
         ros::NodeHandle *m_node_handle;
 
@@ -137,5 +149,7 @@ namespace best_practice_cpp_pkg
 
         //! value of rate waiting for contiuousCallback.
         const double m_rate_waiting{};
+
+        std::mutex m_mutex;
     };
 } // namespace best_practice_cpp_pkg

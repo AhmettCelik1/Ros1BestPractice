@@ -55,24 +55,9 @@ namespace best_practice_cpp_pkg
 
         displayActiveObjects();
 
-        //----------------------------------------------------------------------------------------------------------------------
-        ros::Rate rate(m_rate);
-        ros::Rate rate_waiting(m_rate_waiting);
-        while (ros::ok())
-        {
-            if (areDataReceived(m_is_cloud_received, m_is_image_received))
-            {
-                contiuousCallback();
-            }
-            else
-            {
-                ROS_INFO("[%s] Waiting for data ...", __APP_NAME__);
-                rate_waiting.sleep();
-            }
-            ros::spinOnce();
-            rate.sleep();
-        }
-        //----------------------------------------------------------------------------------------------------------------------
+        std::thread cloud_thread(&BestPractice::threadLoop, this);
+
+        cloud_thread.detach();
     }
 
     //! Member Wise Copy Constructor Deep Coping
@@ -113,7 +98,7 @@ namespace best_practice_cpp_pkg
         ros::shutdown();
     }
 
-    inline bool BestPractice::readParameters()
+    bool BestPractice::readParameters()
     {
 
         if (!m_node_handle->getParam("subscriber_topic_lidar", m_subscriber_topic_lidar))
@@ -161,7 +146,7 @@ namespace best_practice_cpp_pkg
         return true;
     }
 
-    inline bool BestPractice::areDataReceived(const bool &is_cloud_received, const bool &is_image_received)
+    bool BestPractice::areDataReceived(const bool &is_cloud_received, const bool &is_image_received)
     {
         if (is_cloud_received && is_image_received)
         {
@@ -171,35 +156,80 @@ namespace best_practice_cpp_pkg
         return false;
     }
 
-    inline size_t BestPractice::objectCounter()
+    size_t BestPractice::objectCounter()
     {
         return m_number_objects;
     }
 
-    inline void BestPractice::displayActiveObjects() const
+    void BestPractice::displayActiveObjects() const
     {
         ROS_INFO("[%s] Number of active objects: %d", __APP_NAME__, m_number_objects);
     }
 
-    inline void BestPractice::pointCloudCallback(const sensor_msgs::PointCloud2ConstPtr &t_point_cloud)
+    void BestPractice::pointCloudCallback(const sensor_msgs::PointCloud2ConstPtr &t_point_cloud)
     {
-        m_is_cloud_received = true;
-        *m_point_cloud = *t_point_cloud;
+
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
+
+            m_is_cloud_received = true;
+            *m_point_cloud = *t_point_cloud;
+        }
     }
-    inline void BestPractice::imageCallback(const sensor_msgs::ImageConstPtr &t_image)
+    void BestPractice::imageCallback(const sensor_msgs::ImageConstPtr &t_image)
     {
         m_is_image_received = true;
         *m_image = *t_image;
     }
 
-    inline void BestPractice::contiuousCallback()
+    void BestPractice::contiuousCallback()
     {
 
-        //! Build Your Algorithm Here
+        {
+            std::lock_guard<std::mutex> lock(m_mutex);
 
-        m_publishers[m_publisher_topic_lidar].publish(*m_point_cloud);
+            pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+            pcl::fromROSMsg(*m_point_cloud, *cloud);
+            // USE VOXEL GRID FILTER
+            pcl::VoxelGrid<pcl::PointXYZ> sor;
+            sor.setInputCloud(cloud);
+            sor.setLeafSize(0.5f, 0.5f, 0.5f);
+            sor.filter(*cloud);
 
-        m_publishers[m_publisher_topic_image].publish(*m_image);
+            //pcl to ros
+            sensor_msgs::PointCloud2 cloud_ros;
+            pcl::toROSMsg(*cloud, cloud_ros);
+            cloud_ros.header.frame_id = m_frame_id;
+            cloud_ros.header.stamp = ros::Time::now();
+
+            m_publishers[m_publisher_topic_lidar].publish(cloud_ros);
+
+
+        }
+
+
+    }
+
+    void BestPractice::threadLoop()
+    {
+        //----------------------------------------------------------------------------------------------------------------------
+        ros::Rate rate(m_rate);
+        ros::Rate rate_waiting(m_rate_waiting);
+        while (ros::ok())
+        {
+            if (m_is_cloud_received)
+            {
+                contiuousCallback();
+            }
+            else
+            {
+                ROS_INFO("[%s] Waiting for data ...", __APP_NAME__);
+                rate_waiting.sleep();
+            }
+            ros::spinOnce();
+            rate.sleep();
+        }
+        //----------------------------------------------------------------------------------------------------------------------
     }
 
 }
